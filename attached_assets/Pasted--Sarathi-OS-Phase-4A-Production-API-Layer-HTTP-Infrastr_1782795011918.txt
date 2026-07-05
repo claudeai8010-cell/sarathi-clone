@@ -1,0 +1,509 @@
+# Sarathi OS — Phase 4A: Production API Layer & HTTP Infrastructure
+
+## ROLE & DIRECTIVE
+
+You are a Principal Backend Engineer, Staff API Architect, Next.js App Router Specialist, and Clean Architecture Expert.
+
+Execute **Phase 4A** of Sarathi OS.
+
+The project already contains:
+
+- ✅ Phase 1 – Foundation & Architecture
+- ✅ Phase 2 – Data Layer (Schemas, Repositories, DTOs)
+- ✅ Phase 3 – Domain Layer (Services, AI Infrastructure, Business Logic)
+
+Treat the existing codebase as **production-ready**.
+
+Your responsibility is **ONLY** to expose the existing Domain Layer through production-grade HTTP APIs.
+
+Do NOT redesign, regenerate, or simplify the architecture.
+
+---
+
+# MANDATORY PRE-IMPLEMENTATION REVIEW
+
+Before writing a single line of code:
+
+1. Review the complete existing codebase.
+2. Build an internal dependency graph.
+3. Identify every reusable:
+   - Repository
+   - Service
+   - DTO
+   - Interface
+   - Validation Schema
+   - Domain Exception
+   - Utility
+4. Reuse existing implementations.
+5. Do NOT regenerate:
+   - Services
+   - Repositories
+   - Models
+   - DTOs
+   - Validation Schemas
+   - Domain Exceptions
+6. Extend the architecture only where required.
+
+---
+
+# FILE MODIFICATION POLICY
+
+When implementing this phase:
+
+- Never overwrite existing files unless absolutely required.
+- Extend existing implementations whenever possible.
+- Preserve all exported interfaces.
+- Preserve all public method signatures.
+- Preserve dependency injection.
+- If an existing file must be modified, briefly explain why before rewriting it.
+- Never introduce breaking changes to previous phases.
+
+---
+
+# ARCHITECTURE CONTRACT
+
+The architecture MUST remain exactly:
+
+Client
+↓
+Route Handler
+↓
+Request Validation
+↓
+Service Layer
+↓
+Repository Layer
+↓
+MongoDB
+
+Controllers MUST NEVER:
+
+- contain business logic
+- calculate profitability
+- calculate fuel costs
+- perform AI parsing
+- query MongoDB directly
+- instantiate repositories
+- instantiate services manually
+- duplicate validation logic
+
+Controllers SHOULD ONLY:
+
+- parse HTTP requests
+- validate payloads
+- invoke Services
+- serialize responses
+- map exceptions
+
+All business rules remain inside the existing Service Layer.
+
+---
+
+# NEXT.JS DIRECTORY STRUCTURE
+
+Implement ONLY the following additions using exact Next.js App Router conventions:
+
+app/
+└── api/
+    └── v1/
+        ├── auth/
+        │   ├── login/
+        │   │   └── route.ts
+        │   └── verify/
+        │       └── route.ts
+        │
+        ├── ai/
+        │   └── parse/
+        │       └── route.ts
+        │
+        ├── trips/
+        │   ├── route.ts
+        │   └── [tripId]/
+        │       └── status/
+        │           └── route.ts
+        │
+        ├── expenses/
+        │   └── route.ts
+        │
+        └── analytics/
+            ├── daily/
+            │   └── route.ts
+            └── weekly/
+                └── route.ts
+
+middleware.ts
+
+utils/
+├── apiErrorMapper.ts
+└── http/
+
+types/
+└── api.ts
+
+Do NOT create:
+
+- React Components
+- Pages
+- Layouts
+- Zustand Stores
+- React Query Hooks
+- API Client
+- UI
+
+---
+
+# IMPLEMENTATION ORDER
+
+Implement in this exact sequence:
+
+1. API Response Types
+2. Error Mapping
+3. Global Middleware
+4. Authentication Endpoints
+5. AI Endpoint
+6. Trip Endpoints
+7. Expense Endpoints
+8. Analytics Endpoints
+
+After each stage:
+
+- ensure compilation succeeds
+- resolve all TypeScript errors
+- preserve architectural boundaries
+
+---
+
+# API CONTRACTS
+
+## Authentication
+
+### POST /api/v1/auth/login
+
+Input:
+
+- phone
+
+Responsibilities:
+
+- Validate request
+- Call existing Auth Provider
+- Return OTP session
+
+---
+
+### POST /api/v1/auth/verify
+
+Input:
+
+- phone
+- otp
+
+Return:
+
+- JWT
+- Driver Profile
+
+---
+
+## AI
+
+### POST /api/v1/ai/parse
+
+Input:
+
+- userId
+- rawText
+
+Responsibilities:
+
+- Validate request
+- Call AIService
+- Return parsed DTO
+
+No parsing logic inside controller.
+
+---
+
+## Trips
+
+### POST /api/v1/trips
+
+Input:
+
+- userId
+- rawText
+
+Controller only calls:
+
+TripService.processIncomingTripText()
+
+Return:
+
+- Parsed Trip DTO
+- Profitability
+- Confidence Score
+- Trip Score
+
+---
+
+### GET /api/v1/trips
+
+Support:
+
+- pagination
+- filtering
+- sorting
+- status
+- date range
+
+---
+
+### PATCH /api/v1/trips/[tripId]/status
+
+Input:
+
+- targetStatus
+
+Controller only calls:
+
+TripService.transitionStatus()
+
+No lifecycle logic inside controller.
+
+---
+
+## Expenses
+
+### POST /api/v1/expenses
+
+Controller only calls:
+
+ExpenseService.createExpense()
+
+---
+
+### GET /api/v1/expenses
+
+Support:
+
+- category
+- tripId
+- date
+- pagination
+
+---
+
+## Analytics
+
+### GET /api/v1/analytics/daily
+
+Return:
+
+- Total Revenue
+- Total Expenses
+- Net Profit
+- Completed Trips
+
+---
+
+### GET /api/v1/analytics/weekly
+
+Return:
+
+- Weekly Revenue
+- Weekly Expenses
+- Weekly Profit
+- Fuel Cost
+- Trip Count
+- Profit Trend
+
+---
+
+# REQUEST VALIDATION
+
+Use ONLY the existing Zod validation schemas.
+
+Reject invalid payloads before entering the Service Layer.
+
+Never duplicate validation rules.
+
+---
+
+# STANDARD RESPONSE CONTRACT
+
+Create:
+
+types/api.ts
+
+Implement:
+
+```ts
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: ApiError;
+  requestId: string;
+  timestamp: string;
+}
+```
+
+Every endpoint MUST return this envelope.
+
+No endpoint may return inconsistent JSON.
+
+---
+
+# GLOBAL ERROR MAPPING
+
+Create:
+
+utils/apiErrorMapper.ts
+
+Required mappings:
+
+InvalidTripTransitionException
+→ 409 Conflict
+
+LowAIConfidenceException
+→ 202 Accepted
+
+Include:
+
+requiresClarification: true
+
+RouteCalculationException
+→ 502 Bad Gateway
+
+InsufficientDriverDataException
+→ 400 Bad Request
+
+Validation Errors
+→ 400 Bad Request
+
+Authentication Errors
+→ 401 Unauthorized
+
+Missing Resource
+→ 404 Not Found
+
+Unhandled Errors
+→ 500 Internal Server Error
+
+Never expose stack traces.
+
+Always use the existing structured logger.
+
+---
+
+# GLOBAL MIDDLEWARE
+
+Implement:
+
+- JWT Authentication
+- Request ID generation
+- Structured request logging
+- Rate limiting
+- Centralized error handling
+
+Every request must receive a unique requestId.
+
+Use the standard Next.js root `middleware.ts`.
+
+---
+
+# ENGINEERING STANDARDS
+
+- Strict TypeScript
+- Zero `any`
+- Zero duplicate code
+- Zero console.log
+- ESLint clean
+- Prettier clean
+- Controllers under 150 lines
+- Single Responsibility Principle
+- Dependency Injection only
+- Repository Pattern only
+- Clean Architecture only
+
+---
+
+# QUALITY GATES
+
+Before completing:
+
+✔ Project compiles successfully
+
+✔ Zero TypeScript errors
+
+✔ Zero ESLint warnings
+
+✔ Zero unresolved imports
+
+✔ Controllers contain no business logic
+
+✔ Services remain unchanged unless absolutely required
+
+✔ MongoDB accessed only through Repositories
+
+✔ API response contract is consistent
+
+✔ Middleware executes correctly
+
+If any quality gate fails:
+
+Fix it before stopping.
+
+---
+
+# OUTPUT STRATEGY
+
+Generate complete files from top to bottom.
+
+Never truncate files.
+
+If output limits are reached:
+
+1. Finish the current file.
+2. State the next file to generate.
+3. Wait for the command:
+
+continue
+
+before proceeding.
+
+---
+
+# STOP CONDITION
+
+When the API Layer is fully implemented and every endpoint compiles successfully:
+
+STOP.
+
+Do NOT generate:
+
+- React Components
+- Pages
+- Dashboards
+- Forms
+- React Query Hooks
+- API Client
+- Zustand Stores
+- Frontend Logic
+
+Instead provide:
+
+1. Endpoint Inventory
+2. Middleware Inventory
+3. Authentication Flow
+4. Request Lifecycle Diagram
+5. API Layer Audit Report
+6. Compilation Status
+7. Phase 4B Readiness Report
+
+Wait for Phase 4B instructions.

@@ -1,0 +1,485 @@
+# Sarathi OS — Phase 2: Production Data Layer
+
+## ROLE & DIRECTIVE
+
+You are a Principal Software Engineer, Database Architect, and Backend Systems Engineer.
+
+Execute **Phase 2** of Sarathi OS.
+
+Your responsibility is to build the complete production-grade **Data Layer**.
+
+This phase establishes the application's source of truth and must be fully production-ready.
+
+Do **NOT** implement business logic.
+
+Do **NOT** build API routes.
+
+Do **NOT** implement AI parsing.
+
+Do **NOT** build UI components.
+
+Do **NOT** generate placeholder implementations.
+
+Every file must compile successfully with strict TypeScript and contain zero `any` types.
+
+Reuse the infrastructure created during Phase 1.
+
+---
+
+# OBJECTIVES
+
+Build a scalable, maintainable, strongly typed database layer that can support millions of commercial drivers.
+
+Every schema, interface, and validation model should be designed for future extensibility.
+
+---
+
+# REQUIRED ARCHITECTURE
+
+Implement the following folders if they do not already exist.
+
+```
+/schemas
+/models
+/types
+/repositories
+/lib/db
+```
+
+Use this architecture:
+
+```
+Application
+        ↓
+Service Layer (future)
+        ↓
+Repository Layer
+        ↓
+Mongoose Models
+        ↓
+MongoDB
+```
+
+Repositories should encapsulate all database access.
+
+Models should never be queried directly outside repositories.
+
+---
+
+# DATABASE COLLECTIONS
+
+Implement production-ready Mongoose models with:
+
+* timestamps: true
+* schema validation
+* indexes
+* enum validation
+* default values
+* required constraints
+* optimistic concurrency where appropriate
+
+---
+
+## USER
+
+Fields
+
+* userId (unique)
+* phone (unique)
+* name
+* vehicleModel
+* vehicleNumber
+* fuelType
+
+Enum
+
+Petrol
+
+Diesel
+
+iCNG
+
+* baseMileage
+* createdAt
+* updatedAt
+
+Indexes
+
+* userId
+* phone
+
+Validation
+
+Phone required
+
+Mileage > 0
+
+Vehicle required
+
+---
+
+## TRIP
+
+Fields
+
+* tripId
+* user (ObjectId reference → User)
+* status
+
+Enum
+
+New
+
+Accepted
+
+Loaded
+
+In Transit
+
+Delivered
+
+Paid
+
+* pickupLocation
+* dropLocation
+* payloadKg
+* grossRevenue
+* estimatedFuelCost
+* estimatedToll
+* netProfit
+* confidenceScore
+* syncStatus
+
+Enum
+
+Pending
+
+Synced
+
+Validation
+
+Revenue >= 0
+
+Payload >= 0
+
+Confidence 0–100
+
+Indexes
+
+tripId
+
+user
+
+status
+
+createdAt
+
+compound index
+
+user + createdAt
+
+---
+
+## EXPENSE
+
+Fields
+
+* expenseId
+* user (ObjectId reference)
+* trip (optional ObjectId reference)
+* category
+
+Enum
+
+Fuel
+
+Toll
+
+Maintenance
+
+Broker Fee
+
+Food
+
+Parking
+
+Repair
+
+Other
+
+* amount
+* notes
+* receiptImageUrl
+* syncStatus
+
+Enum
+
+Pending
+
+Synced
+
+Validation
+
+Amount > 0
+
+Indexes
+
+expenseId
+
+user
+
+trip
+
+category
+
+createdAt
+
+compound index
+
+user + createdAt
+
+---
+
+## BROKER
+
+Fields
+
+* brokerId
+* name
+* phone
+* company
+* averagePaymentDelay
+* rating
+* notes
+
+Indexes
+
+brokerId
+
+phone
+
+Validation
+
+Rating between 1 and 5
+
+---
+
+# TYPESCRIPT TYPES
+
+Create strict interfaces for every collection.
+
+Generate
+
+```
+types/database.ts
+```
+
+Include
+
+User
+
+Trip
+
+Expense
+
+Broker
+
+Enums
+
+DTOs
+
+Create
+
+Create
+
+Update
+
+Response
+
+No duplicate definitions.
+
+All interfaces must exactly mirror the database models.
+
+---
+
+# ZOD VALIDATION
+
+Create
+
+```
+schemas/validation.ts
+```
+
+Implement
+
+CreateUserSchema
+
+UpdateUserSchema
+
+CreateTripSchema
+
+UpdateTripSchema
+
+CreateExpenseSchema
+
+UpdateExpenseSchema
+
+CreateBrokerSchema
+
+UpdateBrokerSchema
+
+Shared reusable validators.
+
+Use inference to generate TypeScript types.
+
+---
+
+# REPOSITORY LAYER
+
+Implement
+
+```
+repositories/
+
+UserRepository.ts
+
+TripRepository.ts
+
+ExpenseRepository.ts
+
+BrokerRepository.ts
+```
+
+Repositories must expose
+
+create
+
+findById
+
+findOne
+
+findMany
+
+update
+
+delete (soft delete ready)
+
+count
+
+paginate
+
+No business logic.
+
+Database access only.
+
+---
+
+# DATABASE CONNECTION
+
+Reuse Phase 1 singleton connection.
+
+Ensure
+
+connection pooling
+
+hot reload safety
+
+graceful reconnect
+
+typed exports
+
+---
+
+# ERROR HANDLING
+
+Create typed database errors.
+
+Duplicate key
+
+Validation
+
+Not found
+
+Connection
+
+Unknown
+
+No generic Error throws.
+
+---
+
+# CODE QUALITY
+
+Strict TypeScript
+
+No `any`
+
+No duplicated code
+
+Single Responsibility Principle
+
+Reusable utilities
+
+Consistent naming
+
+ESLint clean
+
+Prettier clean
+
+Production ready
+
+---
+
+# DELIVERABLES
+
+Generate complete code for
+
+* All Mongoose models
+* All Zod schemas
+* All TypeScript interfaces
+* Repository layer
+* Shared enums
+* Shared validators
+* Database utilities
+
+At the end provide
+
+1. Entity Relationship summary
+
+2. Index summary
+
+3. Repository architecture summary
+
+4. Data flow explanation
+
+5. Compilation readiness report
+
+---
+
+# STOP CONDITION
+
+When the complete Data Layer is finished
+
+STOP.
+
+Do NOT generate
+
+API routes
+
+Business logic
+
+Fuel calculations
+
+AI parsing
+
+Dashboard
+
+React components
+
+State management
+
+Offline sync
+
+Analytics
+
+Wait for Phase 3 instructions.

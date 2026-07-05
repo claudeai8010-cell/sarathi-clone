@@ -1,0 +1,584 @@
+# Sarathi OS — Phase 3: Domain Services & AI Infrastructure
+
+## ROLE & DIRECTIVE
+
+You are a Principal Software Engineer, Staff Backend Architect, Domain-Driven Design (DDD) Specialist, AI Systems Architect, and Startup CTO.
+
+Execute **Phase 3** of Sarathi OS.
+
+Your responsibility is to build the complete **Domain Service Layer** and **AI Infrastructure Layer**.
+
+This phase establishes the computational core of the application.
+
+Do NOT generate Next.js API routes.
+
+Do NOT generate React components.
+
+Do NOT generate frontend state management.
+
+Do NOT access request/response objects.
+
+Do NOT build placeholder implementations.
+
+Every class must compile under strict TypeScript.
+
+Absolutely no `any` types.
+
+Reuse the Repository Layer from Phase 2.
+
+---
+
+# PRIMARY OBJECTIVE
+
+Create a completely isolated business layer.
+
+All business logic must exist inside services.
+
+Repositories must only persist data.
+
+Future API routes should become thin wrappers that simply call services.
+
+---
+
+# REQUIRED ARCHITECTURE
+
+Implement the following architecture exactly.
+
+```
+Client
+      ↓
+API (Future)
+      ↓
+Controller (Future)
+      ↓
+Service Layer
+      ↓
+Repository Layer
+      ↓
+MongoDB
+```
+
+Services must never access MongoDB directly.
+
+Services must communicate only through repositories.
+
+---
+
+# REQUIRED DIRECTORY STRUCTURE
+
+```
+/services
+
+TripService.ts
+
+TripLifecycleService.ts
+
+ProfitabilityService.ts
+
+ExpenseService.ts
+
+UserService.ts
+
+MapsService.ts
+
+AIService.ts
+
+AnalyticsService.ts
+
+/lib/ai
+
+AIProvider.ts
+
+MockAIProvider.ts
+
+ProviderFactory.ts
+
+/config
+
+business.ts
+
+fuelPrices.ts
+
+confidence.ts
+
+/dto
+
+ParsedTripDTO.ts
+
+CreateTripDTO.ts
+
+TripSummaryDTO.ts
+
+ExpenseDTO.ts
+
+AIExtractionDTO.ts
+
+/exceptions
+
+DomainException.ts
+
+InvalidTripTransitionException.ts
+
+LowAIConfidenceException.ts
+
+RouteCalculationException.ts
+
+InsufficientDriverDataException.ts
+```
+
+---
+
+# DEPENDENCY INJECTION
+
+All services must receive dependencies through constructors.
+
+Never instantiate repositories or providers inside services.
+
+Example architecture
+
+```
+TripService
+
+↓
+
+TripRepository
+
+↓
+
+AIService
+
+↓
+
+MapsService
+
+↓
+
+ProfitabilityService
+```
+
+No service should directly construct another service.
+
+---
+
+# BUSINESS SERVICES
+
+## 1. TripLifecycleService
+
+Only responsibility:
+
+Manage Trip Status.
+
+Allowed transitions
+
+```
+New
+
+↓
+
+Accepted
+
+↓
+
+Loaded
+
+↓
+
+In Transit
+
+↓
+
+Delivered
+
+↓
+
+Paid
+```
+
+Reject every invalid transition.
+
+Throw
+
+InvalidTripTransitionException
+
+No other logic.
+
+---
+
+## 2. ProfitabilityService
+
+Only responsibility:
+
+Financial calculations.
+
+Implement
+
+Fuel Cost
+
+Toll Cost
+
+Broker Fee
+
+Net Profit
+
+Trip Score
+
+Trip ROI
+
+Never access repositories.
+
+Never parse AI.
+
+Never calculate routes.
+
+Read configuration from
+
+```
+config/fuelPrices.ts
+```
+
+not hardcoded values.
+
+---
+
+## 3. AIService
+
+Only responsibility:
+
+Convert unstructured logistics information into structured DTOs.
+
+Support future providers.
+
+Never call OpenAI directly.
+
+Use
+
+```
+AIProvider
+
+↓
+
+ProviderFactory
+
+↓
+
+Mock Provider
+```
+
+Return
+
+ParsedTripDTO
+
+Confidence Score
+
+Missing Fields
+
+Warnings
+
+Never hallucinate data.
+
+---
+
+## 4. MapsService
+
+Abstract routing.
+
+Phase 3 uses deterministic simulation.
+
+Known routes return predefined values.
+
+Unknown routes generate deterministic calculations.
+
+Never hardcode one distance.
+
+Return
+
+Distance
+
+Estimated Time
+
+Estimated Toll
+
+Confidence
+
+---
+
+## 5. ExpenseService
+
+Validate expenses.
+
+Verify Trip ownership.
+
+Auto-categorize fuel expenses.
+
+Generate normalized ExpenseDTO.
+
+---
+
+## 6. TripService
+
+TripService is an orchestration layer.
+
+It must never contain calculations.
+
+Responsibilities
+
+Receive ParsedTripDTO
+
+↓
+
+Call MapsService
+
+↓
+
+Call ProfitabilityService
+
+↓
+
+Call TripLifecycleService
+
+↓
+
+Persist via Repository
+
+↓
+
+Return TripSummaryDTO
+
+TripService coordinates services.
+
+It does not implement business rules itself.
+
+---
+
+## 7. AnalyticsService
+
+Prepare future analytics.
+
+Implement
+
+Daily totals
+
+Weekly totals
+
+Monthly totals
+
+Most profitable trip
+
+Average trip profit
+
+No API routes.
+
+No chart logic.
+
+Only aggregation methods.
+
+---
+
+# CONFIGURATION
+
+Create
+
+```
+config/fuelPrices.ts
+```
+
+```
+Petrol
+
+Diesel
+
+iCNG
+```
+
+Create
+
+```
+config/business.ts
+```
+
+Trip Score thresholds
+
+Profit thresholds
+
+Broker defaults
+
+Create
+
+```
+config/confidence.ts
+```
+
+AI confidence thresholds
+
+Clarification threshold
+
+Acceptance threshold
+
+Never scatter constants.
+
+---
+
+# DTO LAYER
+
+Create
+
+```
+ParsedTripDTO
+
+TripSummaryDTO
+
+CreateExpenseDTO
+
+ExpenseSummaryDTO
+
+AIExtractionDTO
+
+AnalyticsDTO
+```
+
+Services exchange DTOs only.
+
+Never expose raw Mongoose documents.
+
+---
+
+# AI INFRASTRUCTURE
+
+Implement
+
+```
+AIProvider Interface
+
+MockAIProvider
+
+ProviderFactory
+```
+
+The application must be capable of swapping
+
+OpenAI
+
+Gemini
+
+Anthropic
+
+without changing business logic.
+
+---
+
+# LOGGING
+
+Implement
+
+```
+lib/logger
+```
+
+Use structured logging.
+
+Every service logs
+
+Entry
+
+Exit
+
+Execution time
+
+Errors
+
+Warnings
+
+No console.log.
+
+---
+
+# UNIT TEST READINESS
+
+Design every service for dependency injection.
+
+Repositories
+
+AI Provider
+
+Maps Provider
+
+Logger
+
+must all be mockable.
+
+No singleton dependencies inside services.
+
+---
+
+# CODE QUALITY
+
+Strict TypeScript
+
+Zero `any`
+
+Zero duplicate code
+
+ESLint clean
+
+Prettier clean
+
+SOLID Principles
+
+Dependency Injection
+
+Single Responsibility
+
+Open/Closed Principle
+
+Clean Architecture
+
+Domain Driven Design
+
+Production ready.
+
+---
+
+# DELIVERABLES
+
+Generate complete production-ready code for
+
+* All services
+* DTOs
+* AI Provider infrastructure
+* Configuration layer
+* Logger
+* Domain exceptions
+
+At completion provide
+
+1. Service dependency graph
+2. Business workflow diagram
+3. DTO relationships
+4. Configuration summary
+5. Compilation readiness report
+
+---
+
+# STOP CONDITION
+
+After every service compiles successfully:
+
+STOP.
+
+Do NOT generate
+
+API Routes
+
+React Components
+
+Hooks
+
+Pages
+
+Dashboard
+
+Offline Sync
+
+Authentication UI
+
+Await Phase 4.
