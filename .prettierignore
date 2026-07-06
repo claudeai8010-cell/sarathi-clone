@@ -1,0 +1,7 @@
+.next/
+node_modules/
+public/
+dist/
+*.min.js
+pnpm-lock.yaml
+.env*
